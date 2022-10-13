@@ -7,7 +7,7 @@ const db = require('./src/banco');
 
 const server = express();
 
-server.use((req, res, next) => {
+server.use(async (req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     server.use(cors());
     next();
@@ -31,8 +31,16 @@ server.listen(3000, () => {
 setInterval(pegar_valores, 10000);
 
 async function pegar_valores() {
-    // let valores = await axios.get('http://172.16.80.163:4000/esp');
-    let valores = await axios.get('http://localhost:4000/esp');
-    console.log(valores.data);
-    db.cadastrar(valores.data.frequency, valores.data.current);
+    const instance = axios.create({
+        baseURL: 'http://172.16.80.175:5050',
+        timeout: 30000,
+    });
+
+    try {
+        let valores = await instance.get('/esp');
+        await db.cadastrar(valores.data.frequency, valores.data.current);
+    } catch (erro) {
+        console.log(new Date().toUTCString());
+        console.log("Erro: ", erro)
+    }
 }
